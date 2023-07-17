@@ -40,13 +40,9 @@ class _HomePageState extends State<HomePage> {
                 height: 400,
               ),
             ),
-            const SizedBox(
-              height: 40,
-            ),
+            const SizedBox(height: 40),
             SelectableText(text),
-            const SizedBox(
-              height: 40,
-            ),
+            const SizedBox(height: 40),
             FilledButton(
               onPressed: () async {
                 final html = await _controller.getText();
