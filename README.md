@@ -1,6 +1,6 @@
-# poc_go_router
+# POC html editor
 
-A new Flutter project.
+This library is proof of content of an html editor that converts its content to markdown. 
 
 ## Getting Started
 
