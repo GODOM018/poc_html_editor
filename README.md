@@ -11,11 +11,11 @@ This library is proof of content of an html editor that converts its content to 
 
 The HTML Enhanced Editor is able to apply several basic styles to the same part of the text.
 
-![Demo Video 2](https://github.com/GODOM018/poc_html_editor/assets/116824383/7e23bac6-6f6f-41a1-beb4-833a9fa1a545)
+https://github.com/GODOM018/poc_html_editor/assets/116824383/d6261679-f599-4c2f-bfe1-ed01b8d9a2ac 
 
 Also, we can add styles over hyperlinks:
 
-![Demo Video 3](https://github.com/GODOM018/poc_html_editor/assets/116824383/bfde127b-e9f7-4ebd-ab07-c1d0bcc68983)
+https://github.com/GODOM018/poc_html_editor/assets/116824383/d2dc5c44-a284-4155-9568-4628c83e99d6
 
 
 The library supports several types of markdowns, such as headings, code, and quotations.
