@@ -21,3 +21,5 @@ The library supports several types of markdowns, such as headings, code, and quo
 
 ![Screen Recording 2023-07-17 at 12 08 59](https://github.com/GODOM018/poc_html_editor/assets/116824383/2028f1cd-5f7d-4e24-9a50-20cbc48b4eb7)
 
+It also supports tables!
+![Screenshot 2023-07-18 at 14 36 55](https://github.com/GODOM018/poc_html_editor/assets/116824383/9e2fa9a8-c69d-4366-bfe4-e412e97fd28d)
