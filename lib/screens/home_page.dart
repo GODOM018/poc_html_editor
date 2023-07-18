@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:html_editor_enhanced/html_editor.dart' as editor;
 import 'package:html2md/html2md.dart' as html2md;
@@ -23,6 +25,9 @@ class _HomePageState extends State<HomePage> {
       video: false,
       audio: false,
     ),
+    editor.OtherButtons(
+      fullscreen: false,
+    ),
     // ! This ones are not supported in markdown
     // editor.ColorButtons(),
     // editor.ParagraphButtons(),
@@ -30,6 +35,11 @@ class _HomePageState extends State<HomePage> {
   ];
 
   String text = 'It is empty';
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   editor.HtmlToolbarOptions _getToolBarOptions(BuildContext context) {
     return editor.HtmlToolbarOptions(
@@ -67,23 +77,44 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildReloadButton() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 32.0),
-      child: FilledButton(
-        onPressed: () async {
-          final html = await _controller.getText();
-          text = html2md.convert(html);
-          if (mounted) {
-            setState(() {});
-          }
-        },
-        child: const Text('reload'),
+  Widget _buildTextEditor(BuildContext context) {
+    final height = (MediaQuery.sizeOf(context).height - 180.0) / 2;
+
+    return _buildEditorBorder(
+      child: editor.HtmlEditor(
+        callbacks: editor.Callbacks(
+          onChangeContent: (String? html) {
+            if (html != null) {
+              text = html2md.convert(html);
+              if (mounted) {
+                setState(() {});
+              }
+            }
+          },
+          onInit: () {
+            /// Set it to take all the available space in the webview.
+            _controller.setFullScreen();
+            if (mounted) {
+              setState(() {});
+            }
+          },
+        ),
+        controller: _controller,
+        htmlEditorOptions: const editor.HtmlEditorOptions(
+          autoAdjustHeight: false,
+          characterLimit: 1000,
+          darkMode: false,
+          hint: "Type here your text",
+        ),
+        htmlToolbarOptions: _getToolBarOptions(context),
+        otherOptions: editor.OtherOptions(
+          height: max(300.0, height),
+        ),
       ),
     );
   }
 
-  Widget _buildTextEditor(BuildContext context) {
+  Widget _buildEditorBorder({required Widget child}) {
     return Theme(
       data: ThemeData.light().copyWith(
         primaryColor: Colors.blue,
@@ -92,33 +123,13 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 300.0),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(
             color: Colors.grey,
           ),
         ),
-        child: editor.HtmlEditor(
-          controller: _controller,
-          htmlEditorOptions: const editor.HtmlEditorOptions(
-            characterLimit: 1000,
-            darkMode: false,
-            hint: "Type here your text",
-          ),
-          htmlToolbarOptions: _getToolBarOptions(context),
-          otherOptions: const editor.OtherOptions(
-            height: 400,
-          ),
-          callbacks: editor.Callbacks(onChangeContent: (String? html) {
-            if (html != null) {
-              text = html2md.convert(html);
-              if (mounted) {
-                setState(() {});
-              }
-            }
-          }),
-        ),
+        child: child,
       ),
     );
   }
