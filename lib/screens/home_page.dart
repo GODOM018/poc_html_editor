@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:html_editor_enhanced/html_editor.dart' as editor;
 import 'package:html2md/html2md.dart' as html2md;
@@ -10,8 +12,127 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _controller = editor.HtmlEditorController();
+  final _controller = editor.HtmlEditorController(processNewLineAsBr: false);
+  final _toolBarButtons = const [
+    editor.StyleButtons(),
+    editor.FontButtons(
+      underline: false,
+      subscript: false,
+      superscript: false,
+    ),
+    editor.ListButtons(listStyles: false),
+    editor.InsertButtons(
+      video: false,
+      audio: false,
+    ),
+    editor.OtherButtons(
+      fullscreen: false,
+    ),
+    // ! This ones are not supported in markdown
+    // editor.ColorButtons(),
+    // editor.ParagraphButtons(),
+    // editor.FontSettingButtons(),
+  ];
+
   String text = 'It is empty';
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  editor.HtmlToolbarOptions _getToolBarOptions(BuildContext context) {
+    return editor.HtmlToolbarOptions(
+      buttonBorderWidth: 0.0,
+      dropdownBoxDecoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      dropdownItemHeight: 50.0,
+      gridViewHorizontalSpacing: 0.0,
+      renderBorder: true,
+      renderSeparatorWidget: false,
+      textStyle: Theme.of(context).textTheme.bodyMedium,
+      toolbarType: editor.ToolbarType.nativeGrid,
+      defaultToolbarButtons: _toolBarButtons,
+    );
+  }
+
+  Widget _buildPreviewText() {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          color: Colors.white,
+        ),
+        padding: const EdgeInsets.all(8.0),
+        width: double.infinity,
+        child: SingleChildScrollView(
+          controller: ScrollController(),
+          child: SelectableText(text),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextEditor(BuildContext context) {
+    final height = (MediaQuery.sizeOf(context).height - 180.0) / 2;
+
+    return _buildEditorBorder(
+      child: editor.HtmlEditor(
+        callbacks: editor.Callbacks(
+          onChangeContent: (String? html) {
+            if (html != null) {
+              text = html2md.convert(html);
+              if (mounted) {
+                setState(() {});
+              }
+            }
+          },
+          onInit: () {
+            /// Set it to take all the available space in the webview.
+            _controller.setFullScreen();
+            if (mounted) {
+              setState(() {});
+            }
+          },
+        ),
+        controller: _controller,
+        htmlEditorOptions: const editor.HtmlEditorOptions(
+          autoAdjustHeight: false,
+          characterLimit: 1000,
+          darkMode: false,
+          hint: "Type here your text",
+        ),
+        htmlToolbarOptions: _getToolBarOptions(context),
+        otherOptions: editor.OtherOptions(
+          height: max(300.0, height),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditorBorder({required Widget child}) {
+    return Theme(
+      data: ThemeData.light().copyWith(
+        primaryColor: Colors.blue,
+        toggleButtonsTheme: const ToggleButtonsThemeData(
+          fillColor: Colors.white,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(
+            color: Colors.grey,
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,38 +142,12 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.deepPurple.shade100,
       ),
       body: Container(
-        padding: const EdgeInsets.only(
-          top: 20,
-          left: 20,
-          right: 20,
-        ),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            editor.HtmlEditor(
-              controller: _controller,
-              htmlEditorOptions: const editor.HtmlEditorOptions(
-                hint: "Type you Text here",
-              ),
-              htmlToolbarOptions: const editor.HtmlToolbarOptions(
-                toolbarType: editor.ToolbarType.nativeGrid,
-              ),
-              otherOptions: const editor.OtherOptions(
-                height: 400,
-              ),
-            ),
+            _buildTextEditor(context),
             const SizedBox(height: 40),
-            SelectableText(text),
-            const SizedBox(height: 40),
-            FilledButton(
-              onPressed: () async {
-                final html = await _controller.getText();
-                text = html2md.convert(html);
-                if (mounted) {
-                  setState(() {});
-                }
-              },
-              child: const Text('reload'),
-            ),
+            _buildPreviewText(),
           ],
         ),
       ),
