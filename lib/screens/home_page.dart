@@ -12,21 +12,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _controller = editor.HtmlEditorController(processNewLineAsBr: false);
+  final _controller = editor.HtmlEditorController();
   final _toolBarButtons = const [
     editor.StyleButtons(),
     editor.FontButtons(
-      underline: false,
       subscript: false,
       superscript: false,
+      underline: false,
     ),
-    editor.ListButtons(listStyles: false),
+    editor.ListButtons(
+      listStyles: false,
+    ),
     editor.InsertButtons(
-      video: false,
       audio: false,
+      video: false,
     ),
     editor.OtherButtons(
+      codeview: true, //only for testing purposes
       fullscreen: false,
+      help: false,
     ),
     // ! This ones are not supported in markdown
     // editor.ColorButtons(),
@@ -44,11 +48,12 @@ class _HomePageState extends State<HomePage> {
   editor.HtmlToolbarOptions _getToolBarOptions(BuildContext context) {
     return editor.HtmlToolbarOptions(
       buttonBorderWidth: 0.0,
+      defaultToolbarButtons: _toolBarButtons,
       dropdownBoxDecoration: BoxDecoration(
-        color: Colors.white,
         border: Border.all(
           color: Colors.grey.shade300,
         ),
+        color: Colors.white,
       ),
       dropdownItemHeight: 50.0,
       gridViewHorizontalSpacing: 0.0,
@@ -56,7 +61,26 @@ class _HomePageState extends State<HomePage> {
       renderSeparatorWidget: false,
       textStyle: Theme.of(context).textTheme.bodyMedium,
       toolbarType: editor.ToolbarType.nativeGrid,
-      defaultToolbarButtons: _toolBarButtons,
+    );
+  }
+
+  Widget _buildEditorBorder({required Widget child}) {
+    return Theme(
+      data: ThemeData.light().copyWith(
+        primaryColor: Colors.blue,
+        toggleButtonsTheme: const ToggleButtonsThemeData(
+          fillColor: Colors.white,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey,
+          ),
+          color: Colors.white,
+        ),
+        child: child,
+      ),
     );
   }
 
@@ -85,7 +109,12 @@ class _HomePageState extends State<HomePage> {
         callbacks: editor.Callbacks(
           onChangeContent: (String? html) {
             if (html != null) {
-              text = html2md.convert(html);
+              text = html2md.convert(
+                html,
+                styleOptions: {
+                  'headingStyle': 'atx',
+                },
+              );
               if (mounted) {
                 setState(() {});
               }
@@ -102,7 +131,7 @@ class _HomePageState extends State<HomePage> {
         controller: _controller,
         htmlEditorOptions: const editor.HtmlEditorOptions(
           autoAdjustHeight: false,
-          characterLimit: 1000,
+          // characterLimit: 1000,
           darkMode: false,
           hint: "Type here your text",
         ),
@@ -114,32 +143,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEditorBorder({required Widget child}) {
-    return Theme(
-      data: ThemeData.light().copyWith(
-        primaryColor: Colors.blue,
-        toggleButtonsTheme: const ToggleButtonsThemeData(
-          fillColor: Colors.white,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(
-            color: Colors.grey,
-          ),
-        ),
-        child: child,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("HTML Editor in Flutter"),
         backgroundColor: Colors.deepPurple.shade100,
+        title: const Text("HTML Editor in Flutter"),
       ),
       body: Container(
         padding: const EdgeInsets.all(20.0),
