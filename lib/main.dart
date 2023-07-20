@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:poc_html_editor/app_theme.dart';
 import 'package:poc_html_editor/screens/home_page.dart';
 
 void main() {
@@ -17,10 +18,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'HTML editor POC',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.theme,
       home: const HomePage(),
     );
   }

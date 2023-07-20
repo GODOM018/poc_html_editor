@@ -13,8 +13,20 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
+  flutter_switch: ^0.3.2
+  hyperion_components:
+    git:
+      url: 'https://github.com/dpep-cgs/shared_flutter_hyperion_components'
+      ref: 'main'
   html_editor_enhanced: ^2.5.1
   html2md: ^1.3.1
+  markdown: ^7.1.1
+  markdown_widgets:
+    git:
+      url: 'https://github.com/dpep-cgs/shared_flutter_markdown'
+      ref: 'main'
+  url_launcher: ^6.1.12
+  flutter_markdown: ^0.6.17
 
 dev_dependencies:
   flutter_test:

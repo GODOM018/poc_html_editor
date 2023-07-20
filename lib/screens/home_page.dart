@@ -1,8 +1,14 @@
 import 'dart:math';
 
+import 'package:flutter_switch/flutter_switch.dart';
 import 'package:flutter/material.dart';
 import 'package:html_editor_enhanced/html_editor.dart' as editor;
 import 'package:html2md/html2md.dart' as html2md;
+
+import 'package:markdown_widgets/markdown.dart';
+import 'package:markdown/markdown.dart' as md;
+import 'package:poc_html_editor/app_theme.dart';
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,11 +44,27 @@ class _HomePageState extends State<HomePage> {
     // editor.FontSettingButtons(),
   ];
 
-  String text = 'It is empty';
+  String _initialText = '''## Cupcake lorem ipsum
+
+* * *
+
+Sweet roll candy canes **_jujubes [chocolate](http://google.com)_** bar ~~jelly beans cake~~. Marshmallow sweet roll chocolate cake jujubes tart lemon drops pastry cake powder.  
+
+*   Brownie
+*   halvah
+*   jujubes with **[link](http://google.com)**
+
+> "This is a very interesting Quotation: Chocolate bar cake caramels."''';
+  bool _showMarkdownPreview = false;
+  String _text = 'It is empty';
 
   @override
   void initState() {
     super.initState();
+    _initialText = md.markdownToHtml(
+      _initialText,
+      extensionSet: md.ExtensionSet.gitHubFlavored,
+    );
   }
 
   editor.HtmlToolbarOptions _getToolBarOptions(BuildContext context) {
@@ -59,7 +81,7 @@ class _HomePageState extends State<HomePage> {
       gridViewHorizontalSpacing: 0.0,
       renderBorder: true,
       renderSeparatorWidget: false,
-      textStyle: Theme.of(context).textTheme.bodyMedium,
+      // textStyle: HyperionTextStyle.t7_medium,
       toolbarType: editor.ToolbarType.nativeGrid,
     );
   }
@@ -95,7 +117,51 @@ class _HomePageState extends State<HomePage> {
         width: double.infinity,
         child: SingleChildScrollView(
           controller: ScrollController(),
-          child: SelectableText(text),
+          child: AnimatedCrossFade(
+            crossFadeState: _showMarkdownPreview
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            duration: const Duration(milliseconds: 100),
+            firstChild: MediaMarkdownBody(
+              _text,
+              onLinkTap: (Uri url) {
+                url_launcher.launchUrl(url);
+              },
+              styleSheet: AppTheme.getMarkdownStyleSheet(context),
+            ),
+            secondChild: SelectableText(_text),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Center _buildSwitchButton() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: FlutterSwitch(
+          activeColor: Colors.deepPurple,
+          activeText: "Preview",
+          borderRadius: 30.0,
+          height: 40.0,
+          inactiveColor: Colors.deepPurple.shade400,
+          inactiveText: "Markdown",
+          padding: 8.0,
+          showOnOff: true,
+          toggleSize: 25.0,
+          value: _showMarkdownPreview,
+          valueFontSize: 15.0,
+          width: 130.0,
+          onToggle: (value) {
+            if (mounted) {
+              setState(
+                () {
+                  _showMarkdownPreview = value;
+                },
+              );
+            }
+          },
         ),
       ),
     );
@@ -109,10 +175,11 @@ class _HomePageState extends State<HomePage> {
         callbacks: editor.Callbacks(
           onChangeContent: (String? html) {
             if (html != null) {
-              text = html2md.convert(
+              _text = html2md.convert(
                 html,
                 styleOptions: {
                   'headingStyle': 'atx',
+                  'codeBlockStyle': 'fenced',
                 },
               );
               if (mounted) {
@@ -122,6 +189,7 @@ class _HomePageState extends State<HomePage> {
           },
           onInit: () {
             /// Set it to take all the available space in the webview.
+            /// To avoid having two scroll bars at the right.
             _controller.setFullScreen();
             if (mounted) {
               setState(() {});
@@ -129,9 +197,10 @@ class _HomePageState extends State<HomePage> {
           },
         ),
         controller: _controller,
-        htmlEditorOptions: const editor.HtmlEditorOptions(
+        htmlEditorOptions: editor.HtmlEditorOptions(
           autoAdjustHeight: false,
           // characterLimit: 1000,
+          initialText: _initialText,
           darkMode: false,
           hint: "Type here your text",
         ),
@@ -155,7 +224,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             _buildTextEditor(context),
-            const SizedBox(height: 40),
+            _buildSwitchButton(),
             _buildPreviewText(),
           ],
         ),
