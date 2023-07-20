@@ -1,11 +1,14 @@
 # POC html editor
 
-This library is proof of content of an html editor that converts its content to markdown. 
+This library is proof of the content of an html editor that converts its content to markdown. 
 
-## Implemented libraries
+## Usage
+The flow of the data is the following.
 
-* https://pub.dev/packages/html_editor_enhanced
-* https://pub.dev/packages/html2md
+A Markdown Text can be inserted as initial text. It is converted to HTML using the library [Markdown](https://pub.dev/packages/markdown) and set as initial text in the editor.
+The editor of the library [HTML Editor Enhanced](https://pub.dev/packages/html_editor_enhanced) contains the User Interface that allows the user to edit and format its text. It uses only HTML text, so the result is given in HTML. It must be converted to Markdown using the library [html2md](https://pub.dev/packages/html2md). 
+
+The input and output should be in markdown because the app supports only the preview of markdown text. 
 
 ## Demo
 
