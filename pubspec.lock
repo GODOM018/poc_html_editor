@@ -334,6 +334,15 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  font_inspire_twdc:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: main
+      resolved-ref: "72f2c1646e433c86cca92b681509b9753046c2a3"
+      url: "https://github.com/dpep-cgs/shared_flutter_font_inspire_twdc"
+    source: git
+    version: "2.0.0"
   formatting:
     dependency: transitive
     description:

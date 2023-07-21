@@ -64,5 +64,5 @@ class AppTheme {
   static final ThemeData theme = ThemeData.light().copyWith(
       colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       useMaterial3: true,
-      textTheme: TextTheme());
+      textTheme: const TextTheme());
 }
