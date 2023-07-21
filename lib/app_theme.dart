@@ -15,35 +15,45 @@ class AppTheme {
             ),
         blockquotePadding: EdgeInsets.zero,
         blockSpacing: 0,
-        h1: Theme.of(context).textTheme.headlineSmall!.copyWith(
+        h1: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontSize: 30,
               fontWeight: FontWeight.w600,
             ),
         h1Padding: const EdgeInsets.symmetric(
           vertical: HyperionPadding.xlarge,
         ),
-        h2: Theme.of(context).textTheme.headlineSmall!.copyWith(
+        h2: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontSize: 26,
               fontWeight: FontWeight.w600,
             ),
         h2Padding: const EdgeInsets.symmetric(
           vertical: HyperionPadding.large,
         ),
-        h3: Theme.of(context).textTheme.headlineSmall!.copyWith(
+        h3: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
         h3Padding: const EdgeInsets.symmetric(
           vertical: HyperionPadding.medium,
         ),
-        h4: Theme.of(context).textTheme.titleLarge!.copyWith(
+        h4: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
         h4Padding: const EdgeInsets.symmetric(
           vertical: HyperionPadding.medium,
         ),
-        h5: Theme.of(context).textTheme.titleMedium!,
+        h5: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
         h5Padding: const EdgeInsets.symmetric(
           vertical: HyperionPadding.small,
         ),
-        h6: Theme.of(context).textTheme.titleSmall,
+        h6: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
         h6Padding: const EdgeInsets.symmetric(
           vertical: HyperionPadding.small,
         ),
