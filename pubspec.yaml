@@ -30,9 +30,13 @@ dependencies:
     git:
       url: 'https://github.com/dpep-cgs/shared_flutter_markdown'
       ref: 'main'
+  pointer_interceptor: ^0.9.3+4
   url_launcher: ^6.1.12
+  validation:
+    git:
+      url: 'https://github.com/dpep-cgs/shared_dart_validation'
+      ref: 'main'
   
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,6 +1,6 @@
 {
-    "name": "poc_go_router",
-    "short_name": "poc_go_router",
+    "name": "poc_html_editor",
+    "short_name": "poc_html_editor",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

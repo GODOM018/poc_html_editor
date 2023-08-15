@@ -14,7 +14,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   static const String _initialText =
-      '# Header 1\n\n## Header 2\n\n### Header 3\n\n#### Header 4\n\n##### Header 5\n\n###### Header 6';
+      'The text contains a [link](http://google.com) to test the active toggles.';
+  // '# Header 1\n\n## Header 2\n\n### Header 3\n\n#### Header 4\n\n##### Header 5\n\n###### Header 6\n[link](http://google.com)';
   bool _showMarkdownPreview = false;
   String _text = 'It is empty';
 
@@ -96,9 +97,9 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             MarkdownEditor(
-              initialText: _initialText,
-              onChange: (String value) {
-                _text = value;
+              initialValue: _initialText,
+              onChange: ({String? html, String? markdown}) {
+                _text = markdown ?? '';
                 if (mounted) {
                   setState(() {});
                 }
