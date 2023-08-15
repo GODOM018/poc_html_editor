@@ -194,10 +194,10 @@ packages:
     dependency: transitive
     description:
       name: file_picker
-      sha256: b1729fc96627dd44012d0a901558177418818d6bd428df59dcfeb594e5f66432
+      sha256: "21145c9c268d54b1f771d8380c195d2d6f655e0567dc1ca2f9c134c02c819e0a"
       url: "https://pub.dev"
     source: hosted
-    version: "5.3.2"
+    version: "5.3.3"
   flex_color_picker:
     dependency: transitive
     description:
@@ -669,7 +669,7 @@ packages:
     source: hosted
     version: "2.1.5"
   pointer_interceptor:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: pointer_interceptor
       sha256: "6aa680b30d96dccef496933d00208ad25f07e047f644dc98ce03ec6141633a9a"
@@ -925,7 +925,7 @@ packages:
     source: hosted
     version: "3.0.7"
   validation:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "."
       ref: main
