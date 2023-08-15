@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -42,13 +43,11 @@ class MarkdownEditor extends StatefulWidget {
   /// Actions the editor will handle
   final List<MarkdownType> actions;
 
-  // TODO: support the external building of the cancel button
   final Widget Function({
     String? label,
     required void Function() onPressed,
   })? buildCancelButton;
 
-  // TODO: support the external building of the textfield for dialogs
   final Widget Function({
     bool? autofocus,
     bool? enabled,
@@ -59,29 +58,24 @@ class MarkdownEditor extends StatefulWidget {
     ValueValidator? validator,
   })? buildDialogTextField;
 
-  // TODO: support the external building of the Save button
   final Widget Function({
     required void Function() onPressed,
   })? buildSaveButton;
 
-  // TODO: support set buttons color
   /// Overrides markdown controls color
   final Color buttonsColor;
 
   /// The maximum of characters that can be display in the input
   final int? charactersLimit;
 
-  // TODO: support set the editors border color
   /// Overrides the color of the input border
   final Color color;
 
   /// Pass your own controller
   final editor.HtmlEditorController? controller;
 
-  // TODO: support set the dialog's padding
   final EdgeInsets? dialogPadding;
 
-  // TODO: support set the dialog's title padding
   final EdgeInsets? dialogTitlePadding;
 
   // TODO: suppor enabled or disabe editor
@@ -227,7 +221,24 @@ window.parent.postMessage(
 
   Future<void> _onLinkButtonPressed() async {
     final initialText = await _controller.getSelectedTextWeb();
-    _buildLinkDialog(initialText);
+    final result = await _showEditLinkDialog(text: initialText);
+
+    if (result.isNotEmpty) {
+      final Map<String, dynamic> linkData = json.decode(result);
+      final text = linkData['text'];
+      final url = linkData['link'];
+
+      _controller.insertLink(
+        text.isEmpty ? url : text,
+        url,
+        false,
+      );
+    } else {
+      _currentActiveToggle.remove(MarkdownType.link);
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   void _onTogglePressed(int index) {
@@ -322,14 +333,39 @@ window.parent.postMessage(
       "getSelection",
       hasReturnValue: true,
     );
-    final String link = scriptResponseSelection['link'] ?? '';
+    String link = scriptResponseSelection['link'] ?? '';
+    link = link.endsWith('/') ? link.substring(0, link.length - 1) : link;
     final String linkText = scriptResponseSelection['text'] ?? '';
+    final wholeHTML = await _controller.getText();
 
-    // TODO: handle link modification...
-    final editedLink = _showEditLinkDialog(
+    final editedLink = await _showEditLinkDialog(
       link: link,
       text: linkText,
     );
+    final anchor = RegExp(r'<\s*a[^>]*>(.*?)<\s*/\s*a>');
+    final editedHTML = wholeHTML.splitMapJoin(
+      anchor,
+      onMatch: (matches) {
+        String result = matches[0] ?? '';
+        final currentSelectedLink = '<a href="$link">$linkText</a>';
+        if (currentSelectedLink == result) {
+          if (editedLink == '[]()') {
+            // removes the link formatting
+            result = linkText;
+            _currentActiveToggle.remove(MarkdownType.link);
+          } else if (editedLink.isNotEmpty) {
+            final Map<String, dynamic> linkData = json.decode(editedLink);
+            final text = linkData['text'];
+            final url = linkData['link'];
+            // modifies the link;
+            result = '<a href="$url">$text</a>';
+          }
+        }
+
+        return result;
+      },
+    );
+    _controller.setText(editedHTML);
   }
 
   Future<String> _showEditLinkDialog({
@@ -378,11 +414,11 @@ window.parent.postMessage(
     return [
       Theme(
         data: ThemeData.light().copyWith(
-          toggleButtonsTheme: const ToggleButtonsThemeData(
+          toggleButtonsTheme: ToggleButtonsThemeData(
             fillColor: Colors.white,
-            highlightColor: Color(0xffacd4e7),
-            hoverColor: Color(0xffe1eef4),
-            selectedColor: Colors.blue,
+            highlightColor: const Color(0xffacd4e7),
+            hoverColor: const Color(0xffe1eef4),
+            selectedColor: widget.buttonsColor,
           ),
         ),
         child: ClipRRect(
@@ -390,7 +426,7 @@ window.parent.postMessage(
           child: Container(
             decoration: BoxDecoration(
               border: Border.all(
-                color: Colors.grey,
+                color: widget.color,
               ),
               color: Colors.white,
               shape: BoxShape.rectangle,
@@ -405,7 +441,7 @@ window.parent.postMessage(
                 ),
                 direction: Axis.horizontal,
                 isSelected: selectedStatus,
-                onPressed: _onTogglePressed,
+                onPressed: widget.enabled ? _onTogglePressed : null,
                 children: children,
               ),
             ),
@@ -415,143 +451,22 @@ window.parent.postMessage(
     ];
   }
 
-  Future<void> _buildLinkDialog(String initialText) async {
-    final text = TextEditingController();
-    final url = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    await showDialog(
-      context: context,
-      barrierColor: const Color.fromRGBO(0, 36, 61, 0.8),
-      builder: (BuildContext context) {
-        return Theme(
-          data: ThemeData.light(),
-          child: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return PointerInterceptor(
-                child: AlertDialog(
-                  backgroundColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 32.0,
-                    vertical: 24.0,
-                  ),
-                  scrollable: true,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                  title: Text(
-                    'Add link',
-                    style: HyperionTextStyle.t6_heavy,
-                  ),
-                  content: SizedBox(
-                    width: 300.0,
-                    child: Form(
-                      key: formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Text to display',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          HyperionTextField(
-                            autofocus: true,
-                            controller: text,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText: 'Text',
-                            ),
-                            initialValue: initialText,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'URL',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          Theme(
-                            data: Theme.of(context).copyWith(
-                              inputDecorationTheme: Theme.of(context)
-                                  .inputDecorationTheme
-                                  .copyWith(
-                                    errorStyle:
-                                        HyperionTextStyle.t10_roman.copyWith(
-                                      backgroundColor: HyperionColor.slate000,
-                                    ),
-                                  ),
-                            ),
-                            child: HyperionTextField(
-                              controller: url,
-                              // textInputAction: TextInputAction.done,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'URL',
-                              ),
-                              validators: [
-                                Validation.urlValidator,
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  actions: [
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      width: double.infinity,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(right: 16.0),
-                            child: HyperionButton.secondary(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              label: 'Cancel',
-                            ),
-                          ),
-                          HyperionButton(
-                            onPressed: () async {
-                              if (formKey.currentState!.validate()) {
-                                _controller.insertLink(
-                                  text.text.isEmpty ? url.text : text.text,
-                                  url.text,
-                                  false,
-                                );
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            label: 'Save',
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildEditorBorder({required Widget child}) {
     return Theme(
       data: ThemeData.light().copyWith(
         primaryColor: Colors.blue,
       ),
       child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey,
+        decoration: ShapeDecoration(
+          color: widget.enabled ? Colors.white : const Color(0xffe6edef),
+          shape: RoundedRectangleBorder(
+            borderRadius: const BorderRadius.all(
+              Radius.circular(4.0),
+            ),
+            side: BorderSide(
+              color: widget.color,
+            ),
           ),
-          color: Colors.white,
         ),
         padding: const EdgeInsets.only(
           top: HyperionPadding.xlarge + HyperionIconSize.medium,

@@ -355,60 +355,64 @@ class _LinkDialogState extends State<LinkDialog> {
   Widget build(BuildContext context) {
     return Theme(
       data: ThemeData.light(),
-      child: AlertDialog(
-        actions: [
-          _buildDialogActions(context),
-        ],
-        backgroundColor: Colors.white,
-        content: Container(
-          constraints: const BoxConstraints(
-            maxHeight: 150.0,
-            minWidth: 480.0,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 64.0,
-          ),
-          child: _buildDialogInputs(
-            context: context,
-          ),
-        ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(10.0),
-          ),
-        ),
-        title: Stack(
-          alignment: Alignment.topLeft,
-          children: [
-            Center(
-              child: Padding(
-                padding: widget.dialogTitlePadding ??
-                    const EdgeInsets.only(
-                      bottom: 8.0,
-                      top: 50.0,
+      child: StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            actions: [
+              _buildDialogActions(context),
+            ],
+            backgroundColor: Colors.white,
+            content: Container(
+              constraints: const BoxConstraints(
+                maxHeight: 150.0,
+                minWidth: 480.0,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 64.0,
+              ),
+              child: _buildDialogInputs(
+                context: context,
+              ),
+            ),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(10.0),
+              ),
+            ),
+            title: Stack(
+              alignment: Alignment.topLeft,
+              children: [
+                Center(
+                  child: Padding(
+                    padding: widget.dialogTitlePadding ??
+                        const EdgeInsets.only(
+                          bottom: 8.0,
+                          top: 50.0,
+                        ),
+                    child: Text(
+                      isLinkCreation ? 'Add Link' : 'Edit Link',
+                      style: const TextStyle(
+                        color: Color(0xff00233c),
+                        fontSize: 28.0,
+                        fontWeight: FontWeight.w700,
+                        height: 1.7,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                child: Text(
-                  isLinkCreation ? 'Add Link' : 'Edit Link',
-                  style: const TextStyle(
-                    color: Color(0xff00233c),
-                    fontSize: 28.0,
-                    fontWeight: FontWeight.w700,
-                    height: 1.7,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-              ),
+                InkWell(
+                  onTap: () => _onCancelButtonPress(context),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: Color(0xff00233c),
+                    size: 28.0,
+                  ),
+                ),
+              ],
             ),
-            InkWell(
-              onTap: () => _onCancelButtonPress(context),
-              child: const Icon(
-                Icons.close_rounded,
-                color: Color(0xff00233c),
-                size: 28.0,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
