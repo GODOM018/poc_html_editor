@@ -8,6 +8,7 @@ import 'package:html_editor_enhanced/html_editor.dart' as editor;
 import 'package:hyperion_components/hyperion_components.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:markdown_widgets/markdown.dart';
+import 'package:poc_html_editor/js_script.dart';
 import 'package:poc_html_editor/widgets/link_dialog.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:validation/validation.dart';
@@ -78,15 +79,13 @@ class MarkdownEditor extends StatefulWidget {
 
   final EdgeInsets? dialogTitlePadding;
 
-  // TODO: suppor enabled or disabe editor
   /// Disable or enable the edition of the Markdown Text Field
   final bool enabled;
 
   /// Display an initial value in Markdown Text Field
   final String initialValue;
 
-  // TODO: support label
-  /// Display a label in Markdown Text Field
+  /// Display a label in Markdown Text Field (hint text)
   final String label;
 
   /// Callback used to retrieve the markdown and html text in parent's Widget
@@ -110,6 +109,7 @@ class MarkdownEditor extends StatefulWidget {
 
 class _MarkdownEditorState extends State<MarkdownEditor> {
   late final List<MarkdownType> _actions = widget.actions;
+  final RegExp _anchorRegExp = RegExp(r'<\s*a[^>]*>(.*?)<\s*/\s*a>');
   late final _controller = widget.controller ?? editor.HtmlEditorController();
   final List<MarkdownType?> _currentActiveToggle = [];
   final _toolBarButtons = const [
@@ -122,56 +122,6 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
   ];
 
   String? _initialText;
-  final _linkScript = """
-function isLink() {
-    if (window.getSelection().toString !== '') {
-      const selection = window.getSelection().getRangeAt(0)
-      if (selection) {
-        if (selection.startContainer.parentNode.tagName === 'A'
-        || selection.endContainer.parentNode.tagName === 'A') {
-          return true
-        } else { return false }
-      } else { return false }
-    }
-  }
-function getSelectedLink(){
-  const selection= window.getSelection().getRangeAt(0)
-  
-  return selection.startContainer.parentNode.href
-}
-
-function getSelectedText(){
-  const selection= window.getSelection().getRangeAt(0)
-
-  return selection.endContainer.parentNode.innerHTML
-}
-
-var isLinkSelected= isLink();
-
-var getSelection= getSelectedLink();
-
-window.parent.postMessage(
-  JSON.stringify(
-    {
-      "type": "toDart: isLinkSelected", 
-      "isLinkSelected": isLinkSelected,
-    }
-  ), 
-  "*"
-);  
-
-window.parent.postMessage(
-  JSON.stringify(
-    {
-      "type": "toDart: getSelection", 
-      "text": getSelectedText(),
-      "link": getSelectedLink()
-     
-    }
-  ), 
-  "*"
-);  
-""";
 
   @override
   void initState() {
@@ -213,7 +163,9 @@ window.parent.postMessage(
     /// Set it to take all the available space in the webview.
     /// To avoid having two scroll bars at the right.
     _controller.setFullScreen();
-
+    if (!widget.enabled) {
+      _controller.disable();
+    }
     if (mounted) {
       setState(() {});
     }
@@ -319,7 +271,30 @@ window.parent.postMessage(
 
     if (isLinkSelected) {
       _currentActiveToggle.add(MarkdownType.link);
-      await _editLink();
+
+      final selectedText = await _controller.getSelectedTextWeb();
+      if (selectedText.isEmpty) {
+        // Only allow the edition of the link on popover.
+        // Avoid showing the dialog when a text with links is selected.
+        /// Call script which gets the href and the text of the anchor tag
+        final Map<String, dynamic> scriptResponseSelection =
+            await _controller.evaluateJavascriptWeb(
+          "getSelectedLinkParts",
+          hasReturnValue: true,
+        );
+        String link = scriptResponseSelection['link'] ?? '';
+        link = link.endsWith('/') ? link.substring(0, link.length - 1) : link;
+        final String linkText = scriptResponseSelection['text'] ?? '';
+
+        /// Avoid calling the dialog when the selection includes the whole text
+        final isCorrect = !_anchorRegExp.hasMatch(linkText);
+        if (isCorrect) {
+          await _editLink(
+            link: link,
+            linkText: linkText,
+          );
+        }
+      }
     }
 
     if (mounted) {
@@ -327,24 +302,21 @@ window.parent.postMessage(
     }
   }
 
-  Future<void> _editLink() async {
-    final Map<String, dynamic> scriptResponseSelection =
-        await _controller.evaluateJavascriptWeb(
-      "getSelection",
-      hasReturnValue: true,
-    );
-    String link = scriptResponseSelection['link'] ?? '';
-    link = link.endsWith('/') ? link.substring(0, link.length - 1) : link;
-    final String linkText = scriptResponseSelection['text'] ?? '';
+  Future<void> _editLink({
+    required String link,
+    required String linkText,
+  }) async {
+    // TODO: add latch executor
+
     final wholeHTML = await _controller.getText();
 
     final editedLink = await _showEditLinkDialog(
       link: link,
       text: linkText,
     );
-    final anchor = RegExp(r'<\s*a[^>]*>(.*?)<\s*/\s*a>');
+
     final editedHTML = wholeHTML.splitMapJoin(
-      anchor,
+      _anchorRegExp, // Matches with every anchor in the text
       onMatch: (matches) {
         String result = matches[0] ?? '';
         final currentSelectedLink = '<a href="$link">$linkText</a>';
@@ -415,7 +387,7 @@ window.parent.postMessage(
       Theme(
         data: ThemeData.light().copyWith(
           toggleButtonsTheme: ToggleButtonsThemeData(
-            fillColor: Colors.white,
+            fillColor: widget.enabled ? Colors.white : Colors.grey,
             highlightColor: const Color(0xffacd4e7),
             hoverColor: const Color(0xffe1eef4),
             selectedColor: widget.buttonsColor,
@@ -428,7 +400,7 @@ window.parent.postMessage(
               border: Border.all(
                 color: widget.color,
               ),
-              color: Colors.white,
+              color: widget.enabled ? Colors.white : Colors.grey.shade300,
               shape: BoxShape.rectangle,
             ),
             height: 50,
@@ -458,7 +430,7 @@ window.parent.postMessage(
       ),
       child: Container(
         decoration: ShapeDecoration(
-          color: widget.enabled ? Colors.white : const Color(0xffe6edef),
+          color: widget.enabled ? Colors.white : Colors.grey.shade300,
           shape: RoundedRectangleBorder(
             borderRadius: const BorderRadius.all(
               Radius.circular(4.0),
@@ -467,9 +439,6 @@ window.parent.postMessage(
               color: widget.color,
             ),
           ),
-        ),
-        padding: const EdgeInsets.only(
-          top: HyperionPadding.xlarge + HyperionIconSize.medium,
         ),
         child: child,
       ),
@@ -500,8 +469,6 @@ window.parent.postMessage(
         ),
         callbacks: editor.Callbacks(
           onChangeSelection: _updateActiveToggles,
-          // onChangeContent: (String? html) => _onChangeContent(html),
-          // onInit: () => _onInitEditor(),
         ),
       ),
     );
@@ -509,16 +476,17 @@ window.parent.postMessage(
 
   @override
   Widget build(BuildContext context) {
-    final height = (MediaQuery.sizeOf(context).height - 180.0) / 2;
+    final height = (MediaQuery.sizeOf(context).height - 200) / 2;
 
-    return Stack(
-      alignment: Alignment.topLeft,
-      children: [
-        _buildEditorBorder(
-          child: editor.HtmlEditor(
+    return _buildEditorBorder(
+      child: Column(
+        children: [
+          _buildToolbar(),
+          editor.HtmlEditor(
             callbacks: editor.Callbacks(
               onChangeContent: _onChangeContent,
               onInit: _onInitEditor,
+              onPaste: () => _controller.evaluateJavascriptWeb('setStyle'),
             ),
             controller: _controller,
             htmlEditorOptions: editor.HtmlEditorOptions(
@@ -526,14 +494,22 @@ window.parent.postMessage(
               characterLimit: widget.charactersLimit,
               initialText: _initialText,
               darkMode: false,
-              hint: "Type here your text",
-              customOptions: "popover: {link:    []},",
+              hint: widget.label,
+              customOptions: "popover: {link: []},",
               webInitialScripts: UnmodifiableListView(
                 [
                   editor.WebScript(
                     name: 'isLinkSelected',
-                    script: _linkScript,
+                    script: JsScript.isLinkScript,
                   ),
+                  editor.WebScript(
+                    name: 'getSelectedLinkParts',
+                    script: JsScript.getSelectedLinkParts,
+                  ),
+                  editor.WebScript(
+                    name: 'setStyle',
+                    script: JsScript.setStyleScript,
+                  )
                 ],
               ),
             ),
@@ -542,9 +518,8 @@ window.parent.postMessage(
               height: max(300.0, height),
             ),
           ),
-        ),
-        _buildToolbar(),
-      ],
+        ],
+      ),
     );
   }
 }

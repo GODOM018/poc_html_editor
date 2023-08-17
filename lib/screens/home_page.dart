@@ -1,9 +1,11 @@
 import 'package:flutter_switch/flutter_switch.dart';
 import 'package:flutter/material.dart';
+import 'package:hyperion_components/hyperion_components.dart';
 import 'package:markdown_widgets/markdown.dart';
 import 'package:poc_html_editor/app_theme.dart';
 import 'package:poc_html_editor/markdown_editor.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'package:validation/validation.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,15 +15,45 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const String _initialText =
-      'The text contains a [link](http://google.com) to test the active toggles.';
+  static const String _initialText = '';
+  // 'The text contains a [link](http://google.com) to test the active toggles.';
   // '# Header 1\n\n## Header 2\n\n### Header 3\n\n#### Header 4\n\n##### Header 5\n\n###### Header 6\n[link](http://google.com)';
   bool _showMarkdownPreview = false;
   String _text = 'It is empty';
 
-  @override
-  void initState() {
-    super.initState();
+  Widget _buildCancelButton({
+    String? label,
+    required void Function() onPressed,
+  }) {
+    return HyperionButton.secondary(
+      label: label ?? 'Cancel',
+      onPressed: onPressed,
+    );
+  }
+
+  Widget _buildDialogTextField({
+    bool? autofocus,
+    bool? enabled,
+    required IconData icon,
+    String? initialValue,
+    required String label,
+    void Function(String value)? onChanged,
+    ValueValidator? validator,
+  }) {
+    return HyperionTextField(
+      autofocus: autofocus ?? false,
+      decoration: InputDecoration(
+        label: Text(label),
+        prefixIcon: Icon(
+          icon,
+          color: HyperionColor.grey600,
+        ),
+      ),
+      enabled: enabled ?? true,
+      initialValue: initialValue,
+      onChanged: onChanged,
+      validators: validator != null ? [validator] : [],
+    );
   }
 
   Widget _buildPreviewText() {
@@ -51,6 +83,13 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSaveButton({required void Function() onPressed}) {
+    return HyperionButton(
+      label: 'Save',
+      onPressed: onPressed,
     );
   }
 
@@ -97,7 +136,13 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             MarkdownEditor(
+              buttonsColor: HyperionColor.slate700,
+              buildDialogTextField: _buildDialogTextField,
+              buildCancelButton: _buildCancelButton,
+              buildSaveButton: _buildSaveButton,
+              color: HyperionColor.grey600,
               initialValue: _initialText,
+              label: "Type here your text",
               onChange: ({String? html, String? markdown}) {
                 _text = markdown ?? '';
                 if (mounted) {
