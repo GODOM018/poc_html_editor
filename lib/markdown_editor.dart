@@ -349,7 +349,7 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
     );
 
     final bool isLinkSelected = scriptResponse['isLinkSelected'] ?? false;
-
+    final int? nodeTextIndex = scriptResponse['textIndex'];
     if (isLinkSelected) {
       _currentActiveToggle.add(MarkdownType.link);
 
@@ -363,12 +363,15 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
           "getSelectedLinkParts",
           hasReturnValue: true,
         );
+
         String link = scriptResponseSelection['link'] ?? '';
         link = link.endsWith('/') ? link.substring(0, link.length - 1) : link;
         final String linkText = scriptResponseSelection['text'] ?? '';
 
         /// Avoid calling the dialog when the selection includes the whole text
-        final isCorrect = !_anchorRegExp.hasMatch(linkText);
+        /// or when the end selection index matches with the end of the link.
+        final isCorrect = !_anchorRegExp.hasMatch(linkText) &&
+            linkText.length != nodeTextIndex;
         if (isCorrect) {
           await _editLink(
             link: link,
@@ -471,7 +474,7 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
             editor.WebScript(
               name: 'setStyle',
               script: JsScript.setStyleScript,
-            )
+            ),
           ],
         ),
       ),
