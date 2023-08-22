@@ -14,6 +14,7 @@ class LinkDialog extends StatefulWidget {
     this.initialText,
     super.key,
     this.link,
+    required this.onClose,
     required this.setResult,
     required this.textStyle,
   });
@@ -31,11 +32,14 @@ class LinkDialog extends StatefulWidget {
     void Function(String value)? onChanged,
     ValueValidator? validator,
   })? buildDialogTextField;
-  final Widget Function({required void Function() onPressed})? buildSaveButton;
+  final Widget Function({
+    required void Function() onPressed,
+  })? buildSaveButton;
   final EdgeInsets? dialogPadding;
   final EdgeInsets? dialogTitlePadding;
   final String? initialText;
   final String? link;
+  final VoidCallback onClose;
   final void Function(String value) setResult;
   final TextStyle textStyle;
 
@@ -55,9 +59,11 @@ class _LinkDialogState extends State<LinkDialog> {
   void _onCancelButtonPress(BuildContext dialogContext) {
     _link = '';
     _linkText = '';
+    widget.onClose();
     if (mounted) {
       setState(() {});
     }
+
     Navigator.pop(dialogContext);
   }
 
@@ -345,6 +351,7 @@ class _LinkDialogState extends State<LinkDialog> {
         ),
         initialValue: _linkText,
         onChanged: _onLinkTextFieldChanged,
+        validator: (value) => Validation.validateUrl(value),
       );
     }
 

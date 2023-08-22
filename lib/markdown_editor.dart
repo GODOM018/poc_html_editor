@@ -28,6 +28,7 @@ class MarkdownEditor extends StatefulWidget {
     required this.onChange,
     this.buildCancelButton,
     this.buildDialogTextField,
+    this.buildErrorDisclaimer,
     this.buildSaveButton,
     this.buttonsColor = Colors.blue,
     this.color = Colors.grey,
@@ -35,10 +36,10 @@ class MarkdownEditor extends StatefulWidget {
     this.dialogPadding,
     this.dialogTitlePadding,
     this.enabled = true,
+    this.errorColor = Colors.red,
     this.initialValue = '',
     this.label = '',
-    this.textStyle,
-    this.validators,
+    this.validator,
   });
 
   /// Actions the editor will handle
@@ -58,6 +59,10 @@ class MarkdownEditor extends StatefulWidget {
     void Function(String value)? onChanged,
     ValueValidator? validator,
   })? buildDialogTextField;
+
+  final Widget Function({
+    String errorMessage,
+  })? buildErrorDisclaimer;
 
   final Widget Function({
     required void Function() onPressed,
@@ -82,6 +87,9 @@ class MarkdownEditor extends StatefulWidget {
   /// Disable or enable the edition of the Markdown Text Field
   final bool enabled;
 
+  /// Color used in the error disclaimer
+  final Color errorColor;
+
   /// Display an initial value in Markdown Text Field
   final String initialValue;
 
@@ -95,13 +103,8 @@ class MarkdownEditor extends StatefulWidget {
     String? markdown,
   }) onChange;
 
-  // TODO: support text style
-  /// Overrides input text style
-  final TextStyle? textStyle;
-
-  // TODO: support validators
   /// Add validators to the MarkdownTextInput.
-  final String? Function(String? value)? validators;
+  final String? Function(String? value)? validator;
 
   @override
   State<MarkdownEditor> createState() => _MarkdownEditorState();
@@ -121,6 +124,7 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
     ),
   ];
 
+  String? _errorMessage;
   String? _initialText;
 
   @override
@@ -133,6 +137,44 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
         extensionSet: md.ExtensionSet.gitHubFlavored,
       );
     }
+  }
+
+  Future<void> _editLink({
+    required String link,
+    required String linkText,
+  }) async {
+    // TODO: add latch executor
+
+    final wholeHTML = await _controller.getText();
+
+    final editedLink = await _showEditLinkDialog(
+      link: link,
+      text: linkText,
+    );
+
+    final editedHTML = wholeHTML.splitMapJoin(
+      _anchorRegExp, // Matches with every anchor in the text
+      onMatch: (matches) {
+        String result = matches[0] ?? '';
+        final currentSelectedLink = '<a href="$link">$linkText</a>';
+        if (currentSelectedLink == result) {
+          if (editedLink == '[]()') {
+            // removes the link formatting
+            result = linkText;
+            _currentActiveToggle.remove(MarkdownType.link);
+          } else if (editedLink.isNotEmpty) {
+            final Map<String, dynamic> linkData = json.decode(editedLink);
+            final text = linkData['text'];
+            final url = linkData['link'];
+            // modifies the link;
+            result = '<a href="$url">$text</a>';
+          }
+        }
+
+        return result;
+      },
+    );
+    _controller.setText(editedHTML);
   }
 
   editor.HtmlToolbarOptions _getToolBarOptions(BuildContext context) {
@@ -157,6 +199,16 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
       html: html,
       markdown: markdown,
     );
+    // Execute validators
+    if (widget.validator != null) {
+      _errorMessage = widget.validator!(markdown);
+    }
+  }
+
+  void _onFocus() {
+    if (_controller.characterCount == 0) {
+      _controller.execCommand('fontName', argument: 'Avenir');
+    }
   }
 
   void _onInitEditor() {
@@ -166,6 +218,7 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
     if (!widget.enabled) {
       _controller.disable();
     }
+
     if (mounted) {
       setState(() {});
     }
@@ -230,6 +283,34 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
         },
       );
     }
+  }
+
+  Future<String> _showEditLinkDialog({
+    String? link,
+    required String text,
+  }) async {
+    var result = '';
+
+    await showDialog(
+      barrierColor: const Color.fromRGBO(0, 36, 61, 0.8),
+      builder: (dialogContext) => PointerInterceptor(
+        child: LinkDialog(
+          buildCancelButton: widget.buildCancelButton,
+          buildDialogTextField: widget.buildDialogTextField,
+          buildSaveButton: widget.buildSaveButton,
+          dialogPadding: widget.dialogPadding,
+          dialogTitlePadding: widget.dialogTitlePadding,
+          initialText: text,
+          link: link,
+          onClose: () => _controller.setFocus(),
+          textStyle: HyperionTextStyle.t6_heavy,
+          setResult: (String value) => result = value,
+        ),
+      ),
+      context: context,
+    );
+
+    return result;
   }
 
   void _updateActiveToggles(editor.EditorSettings editorSetting) async {
@@ -302,72 +383,6 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
     }
   }
 
-  Future<void> _editLink({
-    required String link,
-    required String linkText,
-  }) async {
-    // TODO: add latch executor
-
-    final wholeHTML = await _controller.getText();
-
-    final editedLink = await _showEditLinkDialog(
-      link: link,
-      text: linkText,
-    );
-
-    final editedHTML = wholeHTML.splitMapJoin(
-      _anchorRegExp, // Matches with every anchor in the text
-      onMatch: (matches) {
-        String result = matches[0] ?? '';
-        final currentSelectedLink = '<a href="$link">$linkText</a>';
-        if (currentSelectedLink == result) {
-          if (editedLink == '[]()') {
-            // removes the link formatting
-            result = linkText;
-            _currentActiveToggle.remove(MarkdownType.link);
-          } else if (editedLink.isNotEmpty) {
-            final Map<String, dynamic> linkData = json.decode(editedLink);
-            final text = linkData['text'];
-            final url = linkData['link'];
-            // modifies the link;
-            result = '<a href="$url">$text</a>';
-          }
-        }
-
-        return result;
-      },
-    );
-    _controller.setText(editedHTML);
-  }
-
-  Future<String> _showEditLinkDialog({
-    String? link,
-    required String text,
-  }) async {
-    var result = '';
-
-    await showDialog(
-      barrierColor: const Color.fromRGBO(0, 36, 61, 0.8),
-      builder: (dialogContext) => PointerInterceptor(
-        child: LinkDialog(
-          buildCancelButton: widget.buildCancelButton,
-          buildDialogTextField: widget.buildDialogTextField,
-          buildSaveButton: widget.buildSaveButton,
-          dialogPadding: widget.dialogPadding,
-          dialogTitlePadding: widget.dialogTitlePadding,
-          initialText: text,
-          link: link,
-          // TODO: unify text styles
-          textStyle: HyperionTextStyle.t6_heavy,
-          setResult: (String value) => result = value,
-        ),
-      ),
-      context: context,
-    );
-
-    return result;
-  }
-
   List<Widget> _buildCustomToggles() {
     final children = <Widget>[];
     final selectedStatus = <bool>[];
@@ -423,26 +438,107 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
     ];
   }
 
+  editor.HtmlEditor _buildEditor({
+    required BuildContext context,
+    required double height,
+  }) {
+    return editor.HtmlEditor(
+      callbacks: editor.Callbacks(
+        onChangeContent: _onChangeContent,
+        onFocus: _onFocus,
+        onInit: _onInitEditor,
+        onPaste: () => _controller.evaluateJavascriptWeb('setStyle'),
+      ),
+      controller: _controller,
+      htmlEditorOptions: editor.HtmlEditorOptions(
+        autoAdjustHeight: false,
+        characterLimit: widget.charactersLimit,
+        customOptions: "popover: {link: []},",
+        darkMode: false,
+        filePath: 'summernote.html',
+        hint: widget.label,
+        initialText: _initialText,
+        webInitialScripts: UnmodifiableListView(
+          [
+            editor.WebScript(
+              name: 'isLinkSelected',
+              script: JsScript.isLinkScript,
+            ),
+            editor.WebScript(
+              name: 'getSelectedLinkParts',
+              script: JsScript.getSelectedLinkParts,
+            ),
+            editor.WebScript(
+              name: 'setStyle',
+              script: JsScript.setStyleScript,
+            )
+          ],
+        ),
+      ),
+      htmlToolbarOptions: _getToolBarOptions(context),
+      otherOptions: editor.OtherOptions(
+        height: max(300.0, height),
+      ),
+    );
+  }
+
   Widget _buildEditorBorder({required Widget child}) {
-    return Theme(
+    Widget result;
+
+    result = Theme(
       data: ThemeData.light().copyWith(
         primaryColor: Colors.blue,
       ),
-      child: Container(
-        decoration: ShapeDecoration(
-          color: widget.enabled ? Colors.white : Colors.grey.shade300,
-          shape: RoundedRectangleBorder(
-            borderRadius: const BorderRadius.all(
-              Radius.circular(4.0),
-            ),
-            side: BorderSide(
-              color: widget.color,
-            ),
-          ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(
+          Radius.circular(4.0),
         ),
-        child: child,
+        child: Container(
+          decoration: BoxDecoration(
+            color: widget.enabled ? Colors.white : Colors.grey.shade300,
+            border: _errorMessage?.isNotEmpty == true
+                ? Border(
+                    bottom: BorderSide(
+                      color: widget.errorColor,
+                      width: 2.0,
+                    ),
+                    left: BorderSide(
+                      color: widget.color,
+                    ),
+                    right: BorderSide(
+                      color: widget.color,
+                    ),
+                    top: BorderSide(
+                      color: widget.color,
+                    ),
+                  )
+                : Border.all(
+                    color: widget.color,
+                  ),
+          ),
+          child: child,
+        ),
       ),
     );
+
+    return result;
+  }
+
+  Widget _buildErrorDisclaimer() {
+    return widget.buildErrorDisclaimer != null
+        ? widget.buildErrorDisclaimer!(errorMessage: _errorMessage!)
+        : Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: widget.errorColor,
+              ),
+              Text(
+                _errorMessage!,
+                style: TextStyle(color: widget.errorColor),
+              )
+            ],
+          );
   }
 
   Widget _buildToolbar() {
@@ -478,48 +574,21 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
   Widget build(BuildContext context) {
     final height = (MediaQuery.sizeOf(context).height - 200) / 2;
 
-    return _buildEditorBorder(
-      child: Column(
-        children: [
-          _buildToolbar(),
-          editor.HtmlEditor(
-            callbacks: editor.Callbacks(
-              onChangeContent: _onChangeContent,
-              onInit: _onInitEditor,
-              onPaste: () => _controller.evaluateJavascriptWeb('setStyle'),
-            ),
-            controller: _controller,
-            htmlEditorOptions: editor.HtmlEditorOptions(
-              autoAdjustHeight: false,
-              characterLimit: widget.charactersLimit,
-              initialText: _initialText,
-              darkMode: false,
-              hint: widget.label,
-              customOptions: "popover: {link: []},",
-              webInitialScripts: UnmodifiableListView(
-                [
-                  editor.WebScript(
-                    name: 'isLinkSelected',
-                    script: JsScript.isLinkScript,
-                  ),
-                  editor.WebScript(
-                    name: 'getSelectedLinkParts',
-                    script: JsScript.getSelectedLinkParts,
-                  ),
-                  editor.WebScript(
-                    name: 'setStyle',
-                    script: JsScript.setStyleScript,
-                  )
-                ],
+    return Column(
+      children: [
+        _buildEditorBorder(
+          child: Column(
+            children: [
+              _buildToolbar(),
+              _buildEditor(
+                context: context,
+                height: height,
               ),
-            ),
-            htmlToolbarOptions: _getToolBarOptions(context),
-            otherOptions: editor.OtherOptions(
-              height: max(300.0, height),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (_errorMessage?.isNotEmpty == true) _buildErrorDisclaimer(),
+      ],
     );
   }
 }

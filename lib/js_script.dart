@@ -51,7 +51,7 @@ window.parent.postMessage(
 
   static const String setStyleScript = '''
 var allElements=document.querySelectorAll("*");
-allElements.forEach((element) => element.style.fontFamily = "Arial"); 
+allElements.forEach((element) => element.style.fontFamily = "Avenir"); 
 allElements.forEach((element) => element.style.fontSize = "16px");
 allElements.forEach((element) => element.tagName !== 'A'? element.style.color = "black": element);
 allElements.forEach((element) => element.style.backgroundColor = "transparent");

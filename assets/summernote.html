@@ -1,0 +1,69 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="description" content="Flutter Summernote HTML Editor" />
+    <meta name="author" content="tneotia" />
+    <title>Summernote Text Editor HTML</title>
+    <script src="packages/html_editor_enhanced/assets/jquery.min.js"></script>
+    <!--summernote js and css-->
+    <link href="packages/html_editor_enhanced/assets/summernote-lite.min.css" rel="stylesheet">
+    <script src="assets/packages/html_editor_enhanced/assets/summernote-lite.min.js"></script>
+    <!--darkCSS-->
+    <style>
+      @font-face {
+        font-family: "Avenir";
+        font-style: normal;
+        font-weight: 300;
+        src: local("Avenir Book"), local("Avenir-300"),
+          url("../../assets/fonts/Avenir-Book.ttf") format("truetype");
+      }
+
+      @font-face {
+        font-family: "Avenir";
+        font-style: normal;
+        font-weight: 500;
+        src: local("Avenir Medium"), local("Avenir-500"),
+          url("../../assets/fonts/Avenir-Medium.ttf") format("truetype");
+      }
+
+      @font-face {
+        font-family: "Avenir";
+        font-style: normal;
+        font-weight: 700;
+        src: local("Avenir Heavy"), local("Avenir-700"),
+          url("../../assets/fonts/Avenir-Heavy.ttf") format("truetype");
+      }
+
+      @font-face {
+        font-family: "Avenir";
+        font-style: normal;
+        font-weight: 900;
+        src: local("Avenir Black"), local("Avenir-900"),
+          url("../../assets/fonts/Avenir-Black.ttf") format("truetype");
+      }
+    </style>
+  </head>
+  <body>
+    <div id="summernote-2"></div>
+    <!--headString-->
+    <!--summernoteScripts-->
+    <!--minor styling to improve editor design-->
+    <style>
+      body {
+        display: block;
+        margin: 0px;
+      }
+      .note-editor.note-airframe,
+      .note-editor.note-frame {
+        border: 0px solid #a9a9a9;
+      }
+      .note-frame {
+        border-radius: 0px;
+      }
+    </style>
+  </body>
+</html>

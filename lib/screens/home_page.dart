@@ -149,6 +149,14 @@ class _HomePageState extends State<HomePage> {
                   setState(() {});
                 }
               },
+              validator: (value) {
+                String? result;
+                if (value == null || value.isEmpty) {
+                  result = 'The value is required';
+                }
+
+                return result;
+              },
             ),
             _buildSwitchButton(),
             _buildPreviewText(),
