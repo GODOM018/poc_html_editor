@@ -194,11 +194,13 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
           'codeBlockStyle': 'fenced',
         },
       );
+      _removeInvalidLinks(html);
     }
     widget.onChange(
       html: html,
       markdown: markdown,
     );
+
     // Execute validators
     if (widget.validator != null) {
       _errorMessage = widget.validator!(markdown);
@@ -282,6 +284,32 @@ class _MarkdownEditorState extends State<MarkdownEditor> {
               : _currentActiveToggle.add(toggle);
         },
       );
+    }
+  }
+
+  /// In some cases links with empty text but with tags are added.
+  /// But this kind of links aren't desired, so they're identified and removed.
+  ///
+  /// For instance: This link should be removed
+  /// ```dart
+  /// '<a href="http://google.com"><b><br></b></a>'
+  /// ```
+  void _removeInvalidLinks(String html) {
+    final editedHTML = html.splitMapJoin(
+      _anchorRegExp, // Matches with every anchor in the text
+      onMatch: (matches) {
+        String result = matches[0] ?? '';
+
+        if (result.contains('<br>')) {
+          result = '';
+        }
+
+        return result;
+      },
+    );
+
+    if (editedHTML != html) {
+      _controller.setText(editedHTML);
     }
   }
 
