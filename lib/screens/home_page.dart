@@ -15,11 +15,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const String _initialText = '';
+  static const String _initialText =
+      'Avenir and Montserrat are both clean, geometric sans serif fonts with clean, simple letterforms and relaxed spacing. Avenir’s letterforms are a bit narrower on the whole. Since Montserrat is on Google Fonts, it’s particularly easy to use in your own project.';
   // 'The text contains a [link](http://google.com) to test the active toggles.';
   // '# Header 1\n\n## Header 2\n\n### Header 3\n\n#### Header 4\n\n##### Header 5\n\n###### Header 6\n[link](http://google.com)';
   bool _showMarkdownPreview = false;
-  String _text = 'It is empty';
+  String _text = '';
 
   Widget _buildCancelButton({
     String? label,
